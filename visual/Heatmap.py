@@ -55,7 +55,7 @@ for i in range(x_size*6):
         temp.append(0.0)
     output.append(temp)
 
-print(processor_map)
+##print(processor_map)
 
 ## Create a grid containing the following info given the data in tasks and comms for the given mapping
 ## grid cell format: [totaltaskload,north_link,east_link,south_link,west_link]
@@ -71,7 +71,7 @@ tasks
 def cal_link_route(xs,ys,xt,yt,load):
     ## XY route x first then y
     ## for each link on the route add the cost
-    print(xs,ys,xt,yt)
+    ##print(xs,ys,xt,yt)
     x = xs
     y = ys
     ##Traverse x first
@@ -80,9 +80,7 @@ def cal_link_route(xs,ys,xt,yt,load):
             grid[x][y][2][1]+= load ## Out east
             grid[x+1][y][4][0]+=load ## In west
             x += 1
-            print(grid[x][y])
         elif(xt-x<0):## West Bound
-            print("West 1")
             grid[x][y][4][1]+=load ## Out west
             grid[x-1][y][2][0]+=load ## In east
             x -= 1
@@ -101,7 +99,7 @@ def cal_link_route(xs,ys,xt,yt,load):
         else: ## finish y traverse
             break
     
-    print("----------")
+    
 
 
 
@@ -184,6 +182,6 @@ for x in range(x_size):
         print_link_west(x,y,grid[x][y][4][1],0)
 
 
-print(grid[8%x_size][int(8/x_size)])
+
 imgplot = plt.imshow(output)
 plt.show()
