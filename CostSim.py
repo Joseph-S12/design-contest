@@ -155,7 +155,7 @@ def routeCommsXY(Routers, Mapping, Comms):
 
 
 
-def getCost(TaskFileName='../tasks.txt', CommsFileName='../comms.txt', MappingFileName="mapping.txt", map = None):
+def getCost(TaskFileName='../tasks.txt', CommsFileName='../comms.txt', MappingFileName="mapping.txt", map = None, returnOveruse=False):
     cost = 0
     ts, cs = getData(TaskFileName, CommsFileName)
     if map is None:
@@ -168,35 +168,44 @@ def getCost(TaskFileName='../tasks.txt', CommsFileName='../comms.txt', MappingFi
     rs, ls = generateMesh(map["meshX"],map["meshY"])
     #print("num routers = ", len(rs))
     #print("num links = ", len(ls))
-    print("meshX:", map["meshX"])
-    print("meshY:", map["meshY"])
-    print("factorFc:", map["factorFc"])
-    print("factorFi:", map["factorFi"])
-    if (not (0 <= map["factorFc"] <= 1.99)) and (not (0 <= map["factorFi"] <= 1.99)):
+    #print("meshX:", map["meshX"])
+    #print("meshY:", map["meshY"])
+    #print("factorFc:", map["factorFc"])
+    #print("factorFi:", map["factorFi"])
+    if (not (0 <= map["factorFc"] <= 1.99)) or (not (0 <= map["factorFi"] <= 1.99)):
         print("factors must be >0 and <1.99")
         return sys.maxsize
     mapTasks(rs, map, ts)
     routeCommsXY(rs, map, cs)
     overused = False
+    overuse = 0
     # infinite cost if any of the tiles have a scaled usage greater than 1
     for i in range(len(rs)):
         if (rs[i].coreUsage / map["factorFc"]) > 1:
-            print("core connected to router", i, "is overused")
+            #print("core connected to router", i, "is overused")
             overused = True
+            overuse+=1
         if (rs[i].Tx / map["factorFi"]) > 1:
-            print("Tx link for core", i, "is overused")
+            #print("Tx link for core", i, "is overused")
             overused = True
+            overuse+=1
         if (rs[i].Rx / map["factorFi"]) > 1:
-            print("Rx link for core", i, "is overused")
+            #print("Rx link for core", i, "is overused")
             overused = True
+            overuse+=1
     # infinite cost if any of the links between tiles have a scaled usage greater than 1  
     for i in range(len(ls)):
         if (ls[i].usage / map["factorFi"]) > 1:
-            print("link", i, "(send from", ls[i].sender.id, "and to", ls[i].reciever.id, ")is overused (", ls[i].usage, ")")
+            #print("link", i, "(send from", ls[i].sender.id, "and to", ls[i].reciever.id, ")is overused (", ls[i].usage, ")")
             overused = True
+            overuse+=1
     if overused:
+        if returnOveruse:
+            return sys.maxsize, overuse
         return sys.maxsize
     cost = (map["meshY"]*map["meshX"])+map["factorFc"]+map["factorFi"]
+    if returnOveruse:
+        return cost, overuse
     return cost
 
 
