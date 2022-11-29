@@ -7,14 +7,10 @@ inputFileName="C:\\Users\\olive\\OneDrive\\Documents\\repositories\\design-conte
 tasks_raw = open("tasks.txt").read()
 tasks_raw = tasks_raw.split("\n")
 
-
 tasks = {}
 for i in range(len(tasks_raw)):
     tasks[i] = float(tasks_raw[i])
     
-
-
-
 links_raw = open("comms.txt").read()
 links_raw = links_raw.split("\n")
 links = {}
