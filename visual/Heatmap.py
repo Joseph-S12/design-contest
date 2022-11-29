@@ -1,5 +1,9 @@
 import matplotlib.pyplot as plt
 
+#inputFileName="mapping.txt"
+inputFileName="C:\\Users\\olive\\OneDrive\\Documents\\repositories\\design-contest\\Results\\6by601-15-18-806570.txt"
+
+
 tasks_raw = open("tasks.txt").read()
 tasks_raw = tasks_raw.split("\n")
 
@@ -18,7 +22,9 @@ for l in links_raw:
     except:
         links[int(temp[0])] = [(int(temp[1]),float(temp[2]))]
 
-f = open("mapping.txt").read().split('\n')
+f = open(inputFileName).read().split('\n')
+if f[-1].strip() == "":
+    f = f[:-1]
 
 x_size,y_size,scaleFc,ScaleFi = tuple(f[0].split(','))
 
