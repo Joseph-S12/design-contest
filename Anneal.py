@@ -8,13 +8,13 @@ import math
 
 cur_path = os.path.dirname(__file__)
 NUM_TASKS = 54
-T0 = 100
-T_FINAL = 1
-COOLING = 1
-I = 100
-TAKE_WORSE_RATE=0.01
-INIT_X=6
-INIT_Y=6
+T0 = 80
+T_FINAL = 3
+COOLING = 0.3
+I = 1000
+TAKE_WORSE_RATE=0.001
+INIT_X=4
+INIT_Y=4
 
 
 
@@ -164,19 +164,21 @@ def anneal():
         N=0
         while N <= I:
             map = None
-            map = shunt(oldMap, random.randint(0, NUM_TASKS-1))
-            # if random.random() > 0.5:
-            #     map = modifyMapBySwaps(oldMap, t)
-            # else:
-            #     map = shunt(oldMap, random.randint(0, NUM_TASKS-1))
+            #map = shunt(oldMap, random.randint(0, NUM_TASKS-1))
+            if random.random() > 0.5:
+                map = modifyMapBySwaps(oldMap, t)
+            else:
+                map = shunt(oldMap, random.randint(0, NUM_TASKS-1))
             cost, overuse=getCost('tasks.txt', 'comms.txt', MappingFileName=None, map=map, returnOveruse=True)
             if overuse == 0:
                 maps.append((map, cost, overuse))
+                return
             if overuse <= oldOveruse and cost <= oldCost:
                 oldMap = map
                 oldOveruse = overuse
                 oldCost = cost
                 if overuse == 0:
+
                     table = isDropSidePossible(oldMap)
                     if table[0]: # drop top
                         #dropRow(oldMap, 0)
