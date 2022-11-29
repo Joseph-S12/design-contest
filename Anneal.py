@@ -1,15 +1,17 @@
 from CostSim import getCost
 import random
-from math import exp
+from datetime import datetime
+import os
 
-
-
+cur_path = os.path.dirname(__file__)
 NUM_TASKS = 54
-T0 = 50
+T0 = 100
 T_FINAL = 0
-K = 1.380649*(10**-23)
-I = 200
-TAKE_WORSE_RATE=0.01
+COOLING = 1
+I = 100
+TAKE_WORSE_RATE=0.05
+INIT_X=4
+INIT_Y=5
 
 
 
@@ -62,6 +64,7 @@ def dropRow(map, minline):
 
 
 def dropLine(map, minline, collumn):
+    print('o',end='')
     if collumn:
         dropCollumn(map, minline)
     else:
@@ -103,8 +106,8 @@ def getMinimallyActiveLine(map):
 
 def generateRandomMap():
     mapping = {}
-    mapping["meshX"]=10
-    mapping["meshY"]=6
+    mapping["meshX"]=INIT_X
+    mapping["meshY"]=INIT_Y
     mapping["factorFc"]=1.199
     mapping["factorFi"]=1.199
     for i in range(NUM_TASKS):
@@ -126,40 +129,59 @@ def anneal():
     t=T0
     maps=[(oldMap,oldCost,oldOveruse)]
     while t > T_FINAL:
+        print(t)
         N=0
         while N <= I:
             map = modifyMapBySwaps(oldMap, t)
             cost, overuse=getCost('tasks.txt', 'comms.txt', MappingFileName=None, map=map, returnOveruse=True)
+            if overuse == 0:
+                maps.append((map, cost, overuse))
             if overuse <= oldOveruse and cost <= oldCost:
                 oldMap = map
                 oldOveruse = overuse
                 oldCost = cost
                 if overuse == 0:
                     table = isDropSidePossible(oldMap)
-                    if table[0]:
-                        dropRow(oldMap, 0)
-                    if table[1]:
-                        dropRow(oldMap, oldMap["meshX"]-1)
-                    if table[2]:
-                        dropCollumn(oldMap, 0)
-                    if table[3]:
-                        dropCollumn(oldMap, oldMap["meshY"]-1)
+                    if table[0]: # drop top
+                        #dropRow(oldMap, 0)
+                        dropLine(oldMap, 0, collumn=False)
+                    if table[1]: # drop bottom
+                        #dropRow(oldMap, oldMap["meshX"]-1)
+                        dropLine(oldMap, oldMap["meshX"]-1, collumn=False)
+                    if table[2]: # drop left
+                        #dropCollumn(oldMap, 0)
+                        dropLine(oldMap, 0, collumn=True)
+                    if table[3]: # drop right
+                        #dropCollumn(oldMap, oldMap["meshY"]-1)
+                        dropLine(oldMap, oldMap["meshY"]-1, collumn=True)
             else:
                 delta = (oldOveruse-overuse) + (oldCost-cost)
                 r = random.random()
                 EnergyMagnitude = t*TAKE_WORSE_RATE
                 #print(EnergyMagnitude)
-                if r < EnergyMagnitude:
+                if r*delta < EnergyMagnitude:
                     oldMap = map
                     oldOveruse = overuse
                     oldCost = cost
             N+=1
         maps.append((oldMap,oldCost,oldOveruse))
-        t-=1
+        t-=COOLING
     return maps
-            
+
+
+def storeResults(map, loc=cur_path):
+    now = now = datetime.now()
+    filename=loc+"\\Results\\"+str(map["meshX"])+"by"+str(map["meshY"])+now.strftime("%H-%M-%S-%f")+".txt"
+    with open(filename, "w") as f:
+        f.write(str(map["meshX"])+","+str(map["meshY"])+","+str(map["factorFc"])+","+str(map["factorFi"])+"\n")
+        for i in range(NUM_TASKS):
+            f.write(str(map[i])+"\n")
+
             
 if __name__ == "__main__":
     res = anneal()
     for i in res:
-        print("size:", i[0]["meshX"]*i[0]["meshX"], "  cost  ", i[1], "   overuse  ", i[2])
+        print("size:", i[0]["meshX"]*i[0]["meshY"], "  cost  ", i[1], "   overuse  ", i[2])
+        if i[2] == 0:
+            storeResults(i[0])
+            break
