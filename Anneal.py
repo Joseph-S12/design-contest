@@ -1,17 +1,20 @@
+from ast import Num
+from matplotlib.pyplot import table
 from CostSim import getCost
 import random
 from datetime import datetime
 import os
+import math
 
 cur_path = os.path.dirname(__file__)
 NUM_TASKS = 54
 T0 = 100
-T_FINAL = 0
+T_FINAL = 1
 COOLING = 1
 I = 100
-TAKE_WORSE_RATE=0.05
-INIT_X=4
-INIT_Y=5
+TAKE_WORSE_RATE=0.01
+INIT_X=6
+INIT_Y=6
 
 def storeStep(map,step,loc=cur_path):
     now = now = datetime.now()
@@ -48,6 +51,7 @@ def isDropSidePossible(map):
     for i in range(meshX-1, meshX*meshY, meshX):
         if i in reverseMap:
             Table[3] = False
+    #print(Table)
     return Table
 
 
@@ -57,7 +61,7 @@ def dropCollumn(map, minline):
     for i in range(NUM_TASKS):
         if map[i] % meshX >= minline: 
             map[i] -= 1
-        map[i] -= i//map["meshX"] # row number
+        map[i] -= map[i]//map["meshX"] # row number
     map["meshX"] -= 1
 
 
@@ -122,12 +126,39 @@ def generateRandomMap():
         mapping[i] = random.randint(0,mapping["meshX"]*mapping["meshY"]-1)
     return mapping
 
+
+def shunt(m, i):
+    map = m
+    dx = (map["meshX"]/2) - (i%map["meshX"]) # distance to middle x (if positive move right)
+    dy = (map["meshX"]/2) - (i//map["meshX"]) # distance to middle y (if positive move down)
+    if abs(dy) > abs(dx) :# further away in y axis from middle than the x axis
+        if dy < 0:
+            for t in range(NUM_TASKS):
+                if map[t] == i: map[t]-=map["meshX"] # up one row
+        elif dy > 0:
+            for t in range(NUM_TASKS):
+                if map[t] == i: map[t]+=map["meshX"] # down one row
+    elif abs(dx) > abs(dy) : # further away in x axis from middle than the y axis
+        if dx < 0:
+            for t in range(NUM_TASKS):
+                if map[t] == i: map[t]-=1 # left one
+        elif dx > 0:
+            for t in range(NUM_TASKS):
+                if map[t] == i: map[t]+=1# right one
+    return map
+
+
+def simpleSwap(m):
+    map = m
+    map[random.randint(0,NUM_TASKS-1)] = random.randint(0,map["meshX"]*map["meshY"]-1)
+    return map
+
+
 def modifyMapBySwaps(m, t):
     map = m
     SWAP_RATE=0.1
-    for i in range(NUM_TASKS):
-        if float(t)*SWAP_RATE < random.uniform(0,100):
-            map[i] = random.randint(0,map["meshX"]*map["meshY"]-1)
+    for i in range(math.ceil(float(t)*SWAP_RATE)):
+        map[random.randint(0,NUM_TASKS-1)] = random.randint(0,map["meshX"]*map["meshY"]-1)
     return map
 
 
@@ -140,7 +171,12 @@ def anneal():
         print(t)
         N=0
         while N <= I:
-            map = modifyMapBySwaps(oldMap, t)
+            map = None
+            map = shunt(oldMap, random.randint(0, NUM_TASKS-1))
+            # if random.random() > 0.5:
+            #     map = modifyMapBySwaps(oldMap, t)
+            # else:
+            #     map = shunt(oldMap, random.randint(0, NUM_TASKS-1))
             cost, overuse=getCost('tasks.txt', 'comms.txt', MappingFileName=None, map=map, returnOveruse=True)
             if overuse == 0:
                 maps.append((map, cost, overuse))
@@ -164,11 +200,11 @@ def anneal():
                         #dropCollumn(oldMap, oldMap["meshY"]-1)
                         dropLine(oldMap, oldMap["meshY"]-1, collumn=True)
             else:
-                delta = (oldOveruse-overuse) + (oldCost-cost)
+                delta = 1#(oldOveruse-overuse) + (oldCost-cost)
                 r = random.random()
-                EnergyMagnitude = t*TAKE_WORSE_RATE
+                EnergyMagnitude = (t*TAKE_WORSE_RATE)/delta
                 #print(EnergyMagnitude)
-                if r*delta < EnergyMagnitude:
+                if r < EnergyMagnitude:
                     oldMap = map
                     oldOveruse = overuse
                     oldCost = cost
@@ -194,4 +230,3 @@ if __name__ == "__main__":
         print("size:", i[0]["meshX"]*i[0]["meshY"], "  cost  ", i[1], "   overuse  ", i[2])
         if i[2] == 0:
             storeResults(i[0])
-            break
