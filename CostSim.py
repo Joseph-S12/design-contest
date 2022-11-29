@@ -118,8 +118,9 @@ def route(senderX, senderY, senderID, reciverX, reciverY, recieverID, c, Routers
     # first resolve X movement
     dx = senderX - reciverX
     dy = senderY - reciverY
-    Routers[senderID].Tx+=c[3]
-    Routers[recieverID].Rx+=c[3]
+    if dx != 0 and dy != 0:
+        Routers[senderID].Tx+=c[3]
+        Routers[recieverID].Rx+=c[3]
     if dx > 0:#go left
         for i in range(abs(dx)):
             #print(senderID-i)
@@ -167,12 +168,6 @@ def getCost(TaskFileName='../tasks.txt', CommsFileName='../comms.txt', MappingFi
         print("recieved", len(ts), "tasks, but mapping has", len(map)-4, "tasks")
         return sys.maxsize
     rs, ls = generateMesh(map["meshX"],map["meshY"])
-    #print("num routers = ", len(rs))
-    #print("num links = ", len(ls))
-    #print("meshX:", map["meshX"])
-    #print("meshY:", map["meshY"])
-    #print("factorFc:", map["factorFc"])
-    #print("factorFi:", map["factorFi"])
     if (not (0 <= map["factorFc"] <= 1.99)) or (not (0 <= map["factorFi"] <= 1.99)):
         print("factors must be >0 and <1.99")
         return sys.maxsize
@@ -208,6 +203,36 @@ def getCost(TaskFileName='../tasks.txt', CommsFileName='../comms.txt', MappingFi
     if returnOveruse:
         return cost, overuse
     return cost
+
+
+
+def reduceFactors(TaskFileName='../tasks.txt', CommsFileName='../comms.txt', MappingFileName="mapping.txt", map = None):
+    ts, cs = getData(TaskFileName, CommsFileName)
+    if map is None:
+        map = getMapping(MappingFileName)
+    if len(ts)+4 != len(map):
+        print("recieved", len(ts), "tasks, but mapping has", len(map)-4, "tasks")
+        return sys.maxsize
+    rs, ls = generateMesh(map["meshX"],map["meshY"])
+    if (not (0 <= map["factorFc"] <= 1.99)) or (not (0 <= map["factorFi"] <= 1.99)):
+        print("factors must be >0 and <1.99")
+        return sys.maxsize
+    mapTasks(rs, map, ts)
+    routeCommsXY(rs, map, cs)
+    mostUsedLink=0
+    mostUsedCore=0
+    for l in ls:
+        if mostUsedLink < l.usage:
+            mostUsedLink = l.usage
+    for r in rs:
+        if mostUsedCore < r.coreUsage:
+            mostUsedCore = r.coreUsage
+    map["factorFi"] = mostUsedLink
+    map["factorFc"] = mostUsedCore
+    return map
+
+
+
 
 
 if __name__ == "__main__":

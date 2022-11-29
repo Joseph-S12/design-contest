@@ -1,4 +1,24 @@
-from random import random
+import random
+
+NUM_TASKS = 54
+
+def getComms():
+    out = []
+    with open("comms.txt", "r") as f:
+        lines = f.readlines()
+        for l in lines:
+            l = l.strip().split(" ")
+            out.append((int(l[0]), int(l[1]), float(l[2])))
+    return out
+
+def getTasks():
+    out = []
+    with open("tasks.txt", "r") as f:
+        lines = f.readlines()
+        for l in lines:
+            l = l.strip()
+            out.append(float(l[0]))
+    return out
 
 ## CPU load repels eachother
 ## Link Load Attracts
@@ -29,11 +49,11 @@ def get_link_cog(mapping_in,id,links):
     total_link = 0
     for i in links:
         if(i[0]==id or i[1] == id):
-            xs = mapping_in[i[1]]%mapping_in["meshX"]
-            ys = mapping_in[i[1]]/mapping_in["meshX"]
+            xs = mapping_in[i[0]]%mapping_in["meshX"]
+            ys = mapping_in[i[0]]/mapping_in["meshX"]
 
-            xt = mapping_in[i[2]]%mapping_in["meshX"]
-            yt = mapping_in[i[2]]/mapping_in["meshX"]
+            xt = mapping_in[i[1]]%mapping_in["meshX"]
+            yt = mapping_in[i[1]]/mapping_in["meshX"]
 
             ## Run x_y routing
             x = xs
@@ -85,7 +105,7 @@ def get_jump_location(mapping_in,id,loads,links,prob):
     yv = ((y-y_load)*loads[id]+(y_link-y)*total_link)/(loads[id]+total_link)
 
     ## Chance of moving
-    if random()<=prob:
+    if random.random()<=prob:
         if(xv > yv):
             if(xv<0):
                 if(x!=0):
@@ -110,6 +130,14 @@ def get_jump_location(mapping_in,id,loads,links,prob):
                     pass
     
     return x,y
-    
+
+def gravityJump(map, t):
+    id = random.randint(0, NUM_TASKS-1)
+    loads = getTasks()
+    links = getComms()
+    prob = 100/t
+    x,y = get_jump_location(map, id, loads, links, prob)
+    map[id] = y*map["meshx"]+x
+    return map
 
 

@@ -1,20 +1,22 @@
 from ast import Num
-from matplotlib.pyplot import table
+from functools import reduce
 from CostSim import getCost
+from CostSim import reduceFactors
 import random
 from datetime import datetime
 import os
 import math
+from GravityJump import gravityJump
 
 cur_path = os.path.dirname(__file__)
 NUM_TASKS = 54
-T0 = 80
-T_FINAL = 3
-COOLING = 0.3
-I = 1000
-TAKE_WORSE_RATE=0.001
-INIT_X=4
-INIT_Y=4
+T0 = 100
+T_FINAL = 40
+COOLING = 5
+I = 50
+TAKE_WORSE_RATE=0.00003
+INIT_X=5
+INIT_Y=3
 
 def storeStep(map,step,loc=cur_path):
     now = now = datetime.now()
@@ -172,35 +174,34 @@ def anneal():
         N=0
         while N <= I:
             map = None
-            #map = shunt(oldMap, random.randint(0, NUM_TASKS-1))
+            # map = shunt(oldMap, random.randint(0, NUM_TASKS-1))
             if random.random() > 0.5:
                 map = modifyMapBySwaps(oldMap, t)
             else:
-                map = shunt(oldMap, random.randint(0, NUM_TASKS-1))
+                map = simpleSwap(oldMap)
             cost, overuse=getCost('tasks.txt', 'comms.txt', MappingFileName=None, map=map, returnOveruse=True)
             if overuse == 0:
                 maps.append((map, cost, overuse))
-                return
+                return maps
             if overuse <= oldOveruse and cost <= oldCost:
                 storeStep(map,N)
                 oldMap = map
                 oldOveruse = overuse
                 oldCost = cost
-                if overuse == 0:
-
-                    table = isDropSidePossible(oldMap)
-                    if table[0]: # drop top
-                        #dropRow(oldMap, 0)
-                        dropLine(oldMap, 0, collumn=False)
-                    if table[1]: # drop bottom
-                        #dropRow(oldMap, oldMap["meshX"]-1)
-                        dropLine(oldMap, oldMap["meshX"]-1, collumn=False)
-                    if table[2]: # drop left
-                        #dropCollumn(oldMap, 0)
-                        dropLine(oldMap, 0, collumn=True)
-                    if table[3]: # drop right
-                        #dropCollumn(oldMap, oldMap["meshY"]-1)
-                        dropLine(oldMap, oldMap["meshY"]-1, collumn=True)
+                # if overuse == 0:
+                #     table = isDropSidePossible(oldMap)
+                #     if table[0]: # drop top
+                #         #dropRow(oldMap, 0)
+                #         dropLine(oldMap, 0, collumn=False)
+                #     if table[1]: # drop bottom
+                #         #dropRow(oldMap, oldMap["meshX"]-1)
+                #         dropLine(oldMap, oldMap["meshX"]-1, collumn=False)
+                #     if table[2]: # drop left
+                #         #dropCollumn(oldMap, 0)
+                #         dropLine(oldMap, 0, collumn=True)
+                #     if table[3]: # drop right
+                #         #dropCollumn(oldMap, oldMap["meshY"]-1)
+                #         dropLine(oldMap, oldMap["meshY"]-1, collumn=True)
             else:
                 delta = 1#(oldOveruse-overuse) + (oldCost-cost)
                 r = random.random()
@@ -225,10 +226,18 @@ def storeResults(map, loc=cur_path):
             f.write(str(map[i])+"\n")
 
 
+
+
+
             
 if __name__ == "__main__":
-    res = anneal()
-    for i in res:
-        print("size:", i[0]["meshX"]*i[0]["meshY"], "  cost  ", i[1], "   overuse  ", i[2])
-        if i[2] == 0:
-            storeResults(i[0])
+    found = False
+    while not found:
+        res = anneal()
+        for i in res:
+            print("size:", i[0]["meshX"]*i[0]["meshY"], "  cost  ", i[1], "   overuse  ", i[2])
+            if i[2] == 0:
+                found = True
+                outmap = reduceFactors('tasks.txt', 'comms.txt', map=i[0])
+                storeResults(i[0])
+
