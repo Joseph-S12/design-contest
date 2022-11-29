@@ -78,11 +78,6 @@ def generateMesh(x, y):
         pass
     def xy2i(Xval, Yval):
         return Yval*x + Xval
-    # if str(x)+"|"+str(y) in meshHistory:
-    #     out = meshHistory[str(x)+"|"+str(y)]
-    #     rs = deepcopy(out[0])
-    #     ls = deepcopy(out[1])
-    #     return rs, ls
     routers = [Router(i) for i in range(x*y)]
     links = []
     # for every row there is a link in between each router
@@ -105,7 +100,6 @@ def generateMesh(x, y):
             routers[xy2i(b,a)+x].u=links[-1]
     # I know. I know. "that could be one for loop!". Yeah good luck reading that hot mess.
     # I like my double double for loop and you can't take it away from me.
-    #meshHistory[str(x)+"|"+str(y)] = (deepcopy(routers), deepcopy(links))
     return routers, links
 
 
