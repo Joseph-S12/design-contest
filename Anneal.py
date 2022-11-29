@@ -13,6 +13,14 @@ TAKE_WORSE_RATE=0.05
 INIT_X=4
 INIT_Y=5
 
+def storeStep(map,step,loc=cur_path):
+    now = now = datetime.now()
+    filename=loc+"\\Results\\Animation\\"+str(map["meshX"])+"by"+str(map["meshY"])+str(step)+".txt"
+    with open(filename, "w") as f:
+        f.write(str(map["meshX"])+","+str(map["meshY"])+","+str(map["factorFc"])+","+str(map["factorFi"])+"\n")
+        for i in range(NUM_TASKS):
+            f.write(str(map[i])+"\n")
+
 
 
 def isDropSidePossible(map):
@@ -137,6 +145,7 @@ def anneal():
             if overuse == 0:
                 maps.append((map, cost, overuse))
             if overuse <= oldOveruse and cost <= oldCost:
+                storeStep(map,N)
                 oldMap = map
                 oldOveruse = overuse
                 oldCost = cost
@@ -176,6 +185,7 @@ def storeResults(map, loc=cur_path):
         f.write(str(map["meshX"])+","+str(map["meshY"])+","+str(map["factorFc"])+","+str(map["factorFi"])+"\n")
         for i in range(NUM_TASKS):
             f.write(str(map[i])+"\n")
+
 
             
 if __name__ == "__main__":
